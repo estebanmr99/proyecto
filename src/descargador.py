@@ -1,24 +1,26 @@
-# Mozilla/5.0 (compatible; ProjectCrawlerBot/1.0;)
-
-# download document files and save to local files concurrently
-from os import makedirs
 from os.path import basename
 from os.path import join, exists
-from urllib.request import urlopen, Request
 from concurrent.futures import ThreadPoolExecutor
 import concurrent.futures
 import time
 import queue
 import requests
-import random
 import preprocesamiento as pp
+import threading
+import os
+from datetime import datetime
+import json
+from dateutil.parser import parse as parsedate
 
+# variables generales
+semaphoreLinks = threading.Semaphore()
+semaphoreSavingJSON = threading.Semaphore()
 q = queue.Queue()
 PATH = '../documentos/docsOriginales/'
 LINKS = []
 COOLDOWN = 0.15
 
-# python concurrency API docs
+# lista de URLS a descargar
 URLS = [
         'https://www.clickdimensions.com/links/TestPDFfile.pdf',
         'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
@@ -30,19 +32,20 @@ URLS = [
         'https://www.ministeriodesalud.go.cr/index.php/biblioteca-de-archivos-left/documentos-ministerio-de-salud/vigilancia-de-la-salud/normas-protocolos-guias-y-lineamientos/situacion-nacional-covid-19/lineamientos-especificos-covid-19/protocolos-1/2756-version-1-05-de-octubre-2020-protocolo-general-para-el-manejo-del-paro-cardiorespitatorio-pcr-en-el-entorno-extrahospitalario-y-en-el-marco-de-la-pandemia-por-covid-19/file',
         'https://docs.python.org/3/library/concurrency.html']
 
-def feed_the_workers(urls , spacing):
-    """ Simulate outside actors sending in work to do, request each url twice """
+# agrega una lista de URLS a una cola de prioridad para ejecutar los hilos
+def addURLsToThreadQueue(urls , spacing):
     for url in urls:
         time.sleep(spacing)
         q.put(url)
     return "DONE FEEDING"
 
-# download a url and return the raw data, or None on error
+# descarga un URL y devuelve los datos sin procesar, o None en caso de error
 def download_url(url):
     try:
-        # open a connection to the server
+        # abrir una conexión al servidor
         req = requests.get(url, headers={'User-Agent': 'Mozilla/5.0 (compatible; ProjectCrawlerBot/1.0;)'}, timeout=3)
         content_type = req.headers.get('content-type')
+        last_modified = req.headers.get('last-modified')
 
         if 'application/pdf' in content_type:
             ext = '.pdf'
@@ -52,83 +55,128 @@ def download_url(url):
             ext = ''
             print('Unknown type: {}'.format(content_type))
 
-        # read the contents of the html doc
-        return req.content, ext
+        # leer el contenido del documento html
+        return req.content, ext, last_modified
 
     except:
-        # bad url, socket timeout, http forbidden, etc.
-        return None, None
+        # URL incorrecta, tiempo de espera de socket, http prohibido, etc.
+        return None, None, None
  
-# save data to a local file
+# guardar datos en un archivo local
 def save_file(fileName, data, path):
-    # construct a local path for saving the file
+    # construye una ruta local para guardar el archivo
     outpath = join(path, fileName)
-    # save to file
+    # Guardar en archivo
     with open(outpath, 'wb') as file:
         file.write(data)
     return outpath
  
-def checkFileName(path, fileName):
+# verifica que el nombre del pdf se pueda guardar sino genera un nuevo
+def checkFileName(path, fileName, last_modified):
     outpath = join(path, fileName)
     newFileName = fileName
-    randomInt = random.randint(0, 999)
-    while(exists(outpath)):
-        newFileName = fileName.replace(".pdf", str(randomInt) + ".pdf").replace(".html", str(randomInt) + ".html")
-        outpath = join(path, newFileName)
-        randomInt = random.randint(0, 999)
+    # si el nombre existe se crea uno con la fecha de modificacion
+    if(exists(outpath)):
+        fileDatePlusTime = parsedate(last_modified).strftime("%Y-%m-%d-%H:%M:%S")
+        newFileName = fileName.replace(".pdf", str(fileDatePlusTime) + ".pdf").replace(".html", str(fileDatePlusTime) + ".html")
 
     return newFileName
 
-# download and save a url as a local file
+# descargar y guardar una url como un archivo local
 def download_and_save(url, path):
-    # download the url
-    data, ext = download_url(url)
-    # check for no data
+    # descargar el URL
+    data, ext, last_modified = download_url(url)
+    # revisar si descarga funciono
     if data is None:
         print(f'>Error downloading {url}')
         return
-    # get the name of the file from the url
+    # obtener el nombre del archivo de la url
     fileName = basename(url).replace(".pdf", "").replace(".html", "") + ext
 
-    fileName = checkFileName(path, fileName)
+    fileName = checkFileName(path, fileName, last_modified)
 
-    # save the data to a local file
+    # guardar los datos en un archivo local
     outpath = save_file(fileName, data, path)
-    # report progress
-    # print(f'>Saved {url} to {outpath}')
 
-    # ------------------------------------------------------------------------------------- poner semaforo
+    # Si el archivo se guardo bien se 
     if(exists(outpath)):
+        semaphoreLinks.acquire()
         newLink = {
             "link": url,
             "path-texto-original": join(path, fileName),
         }
         LINKS.append(newLink);
+        semaphoreLinks.release()
+
+# se agrega el archivo procesado al almacen
+def procesingFile(linkDic):
+    # se obtienen todos los metadatos necesarios del archivo
+    fileName = os.path.basename(linkDic["path-texto-original"])
+    fileCreationDate = datetime.fromtimestamp(os.path.getctime(linkDic["path-texto-original"])).strftime("%d/%m/%Y")
+    fileModificationDate = datetime.fromtimestamp(os.path.getmtime(linkDic["path-texto-original"])).strftime("%d/%m/%Y")
+    fileAccessDate = datetime.today().strftime("%d/%m/%Y")
+    processedFilePath = "../documentos/almacen/textoProcesado/" + fileName.replace(".pdf", ".txt")
+
+    # se agregan los metadato al diccionario
+    linkDic["fecha-ingreso"] = fileAccessDate
+    linkDic["fecha-reingreso"] = fileAccessDate
+    linkDic["titulo"] = fileName
+    linkDic["fecha-creacion-documento"] = fileCreationDate
+    linkDic["fecha-actualizacion-documento"] = fileModificationDate
+    linkDic["path-texto-enriquecido"] = processedFilePath
+
+    almacenFilePath = "../documentos/almacen/almacen.json"
+
+    # se pide el semaforo para guardar el nuevo json en el almacen
+    semaphoreSavingJSON.acquire()
+    with open(almacenFilePath, "r") as jsonFile:
+        data = json.load(jsonFile)
+
+    isLinkPresent = False
+    # buscar si la llave existia previamente en el almacen
+    for i in range (0, len(data["links"])):
+        if (data["links"][i]["link"] == linkDic["link"]):
+            data["links"][i]["fecha-reingreso"] = fileAccessDate
+            data["links"][i]["fecha-actualizacion-documento"] = fileModificationDate
+            data["links"][i]["path-texto-enriquecido"] = processedFilePath
+            isLinkPresent = True
+            break
+    
+    # si la llave no existia se agrega todo el diccionario del url
+    if (not isLinkPresent):
+        data["links"].append(linkDic)
+
+    # guarda el json modificado en el almacen
+    with open(almacenFilePath, "w") as jsonFile:
+        json.dump(data, jsonFile)
+
+    #devuelve el semaforo
+    semaphoreSavingJSON.release()
  
-# download a list of URLs to local files
+# descargar una lista de URL a archivos locales
 def download_docs(urls):
     path = PATH
-    # create the thread pool
+    # crear un thread pool
     with ThreadPoolExecutor(max_workers=25) as executor:
         future_to_url = {
-            executor.submit(feed_the_workers, urls, COOLDOWN): 'FEEDER DONE'}
+            executor.submit(addURLsToThreadQueue, urls, COOLDOWN): 'FEEDER DONE'}
 
         while future_to_url:
-            # check for status of the futures which are currently working
+            # comprobar el estado de los futuros que están funcionando actualmente
             done, not_done = concurrent.futures.wait(
                 future_to_url, timeout=COOLDOWN,
                 return_when=concurrent.futures.FIRST_COMPLETED)
 
-            # if there is incoming work, start a new future
+            # si hay trabajo entrante, comienza un nuevo futuro
             while not q.empty():
 
-                # fetch a url from the queue
+                # obtener una URL de la cola
                 url = q.get()
 
-                # Start the load operation and mark the future with its URL
+                # inicia la operación de descarga y marca el futuro con el URL
                 future_to_url[executor.submit(download_and_save, url, path)] = url
 
-            # process any completed futures
+            # procesar cualquier futuro completado
             for future in done:
                 url = future_to_url[future]
                 try:
@@ -138,17 +186,18 @@ def download_docs(urls):
                 else:
                     if url == 'FEEDER DONE':
                         print(data)
-                    # else:
-                    #     print('%r page is %d bytes' % (url, len(data)))
 
-                # remove the now completed future
+                # eliminar el futuro ahora completado
                 del future_to_url[future]
     
     n_threads = len(LINKS)
     with ThreadPoolExecutor(n_threads) as executor:
-        # download each url and save as a local file
-        _ = [executor.submit(pp.preprocessingFile, link["path-texto-original"]) for link in LINKS]
+        # procesa cada archivo para guardarse en el almacen (JSON)
+        _ = [executor.submit(procesingFile, link) for link in LINKS]
 
- 
-# download all docs
+    with ThreadPoolExecutor(n_threads) as executor:
+        # hace el preprocesamiento para cada archivo descargado
+        _ = [executor.submit(pp.preprocessingFile, link["path-texto-original"]) for link in LINKS]
+    
+# descargar todos los archivos
 download_docs(URLS)
