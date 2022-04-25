@@ -1,0 +1,36 @@
+{
+    "configuracion": {
+        "politicas": [
+            {
+                "politica": "seleccion",
+                "numero-de-sitios-en-concurrencia": "algo",
+                "profundidad": "algo",
+                "documentos-a-descargar-en-concurrencia": "numero",
+                "documentos-a-descargar-por-dominio-en-concurrencia": "numero",
+                "bytes-descargado-concurrente": "numero"
+            }
+        ],
+        "linkSemillas": [
+            {
+                "link": "https://www.ict.go.cr/en/documents/material-de-apoyo-coronavirus.html",
+                "tiempo": "3 dias"
+            },
+            {
+                "link": "https://www.presidencia.go.cr/transparenciainstitucional/",
+                "tiempo": "7 dias"
+            },
+            {
+                "link": "https://repositorio.conare.ac.cr/discover?scope=%2F&query=pandemia&submit=&rpp=10&sort_by=dc.date.issued_dt&order=desc",
+                "tiempo": "60 dias"
+            },
+            {
+                "link": "http://biblioteca.conare.ac.cr/index.php/biblioteca.html",
+                "tiempo": "30 dias"
+            },
+            {
+                "link": "https://www.ministeriodesalud.go.cr/index.php/component/search/?searchword=PANDEMIA&searchphrase=all&Itemid=122",
+                "tiempo": "30 dias"
+            }
+        ]
+    }
+}
