@@ -2,7 +2,7 @@ from distutils.command.config import config
 import json
 from datetime import datetime, timedelta
 from re import sub
-import tldextract
+import tldextract 
 
 def calendarizadorLargoPlazo(rutaArchivoConfig):
 
@@ -14,11 +14,10 @@ def calendarizadorLargoPlazo(rutaArchivoConfig):
     #print("Lista no revisitar: ", listaNoRevisitar, "\n")
     #print("Lista de links semillas: ", linksSemilla, "\n")
     return linksSemilla, listaRevisitar, listaNoRevisitar
+    ###################################################
 
 def leerArchivoConfiguracion(rutaArchivoConfig):
     # Leer archivo de configuracion
-    # LISTO
-    ###################################################
     configFile = open(rutaArchivoConfig) # Se abre el archivo .json
     dataConfig = json.load(configFile) # Se tiene el objeto .json como un diccionario
 
@@ -55,11 +54,9 @@ def leerArchivoConfiguracion(rutaArchivoConfig):
     ###################################################
 
 def leerArchivoAlmacen():
-    # Leer almacen de datos
-    # LISTO
-    ###################################################    
+    # Leer almacen de datos 
     # Se abre el archivo .json
-    almacenFile = open('D:/TEC/Semestre 1 2022/RIT/spyder-master/spyder-master/documentos/almacen/almacen.json')
+    almacenFile = open('./documentos/almacen/almacen.json')
     almacenData = json.load(almacenFile) # Se tiene el objeto .json como un diccionario
 
     # Se crea una lista con los links del almacen y la ultima fecha que se visito
@@ -165,4 +162,3 @@ def actualizadorFechas(listaConfig, listaAlmacen, linksOriginales):
     # Se retornan las dos listas de revisitacion
     return listaRevisitar, listaNoRevisitar
 
-#calendarizadorLargoPlazo('D:/TEC/Semestre 1 2022/RIT/spyder-master/spyder-master/src/archivo-de-configuracion.json')

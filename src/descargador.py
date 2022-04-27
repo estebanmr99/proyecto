@@ -156,6 +156,7 @@ def procesingFile(linkDic):
 # descargar una lista de URL a archivos locales
 def download_docs(urls):
     path = PATH
+    
     # crear un thread pool
     with ThreadPoolExecutor(max_workers=25) as executor:
         future_to_url = {
@@ -200,4 +201,4 @@ def download_docs(urls):
         _ = [executor.submit(pp.preprocessingFile, link["path-texto-original"]) for link in LINKS]
     
 # descargar todos los archivos
-download_docs(URLS)
+#download_docs(URLS)

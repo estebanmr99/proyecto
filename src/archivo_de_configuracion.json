@@ -1,0 +1,28 @@
+{
+    "configuracion": {
+        "politicas": [
+            {
+                "politica": "seleccion",
+                "numero-de-sitios-en-concurrencia": "2",
+                "profundidad": "10",
+                "documentos-a-descargar-en-concurrencia": "25",
+                "documentos-a-descargar-por-dominio-en-concurrencia": "10",
+                "bytes-descargado-concurrente": "10"
+            }
+        ],
+        "linkSemillas": [
+            {
+                "link": "https://www.ict.go.cr/en/documents/material-de-apoyo-coronavirus/protocolos-ict-sector-privado.html",
+                "tiempo": "3 dias"
+            },
+            {
+                "link": "https://repositorio.conare.ac.cr/bitstream/handle/20.500.12337/8009/Leon_G_Efectos_pandemia_COVID_19_Mipymes_Costa%20Rica_2020.pdf?sequence=1&isAllowed=y",
+                "tiempo": "60 dias"
+            },
+            {
+                "link": "https://www.ministeriodesalud.go.cr/index.php/biblioteca-de-archivos-left/documentos-ministerio-de-salud/vigilancia-de-la-salud/normas-protocolos-guias-y-lineamientos/situacion-nacional-covid-19/estrategias-guias-y-recomendaciones-covid-19",
+                "tiempo": "30 dias"
+            }
+        ]
+    }
+}
