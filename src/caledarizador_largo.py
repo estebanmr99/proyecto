@@ -56,7 +56,7 @@ def leerArchivoConfiguracion(rutaArchivoConfig):
 def leerArchivoAlmacen():
     # Leer almacen de datos 
     # Se abre el archivo .json
-    almacenFile = open('./documentos/almacen/almacen.json')
+    almacenFile = open('../documentos/almacen/almacen.json')
     almacenData = json.load(almacenFile) # Se tiene el objeto .json como un diccionario
 
     # Se crea una lista con los links del almacen y la ultima fecha que se visito

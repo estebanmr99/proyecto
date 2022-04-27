@@ -1,15 +1,4 @@
 {
   "links": [
-    {
-      "link": "google.com",
-      "autor": "Esteban",
-      "fecha-ingreso": "02/04/22",
-      "fecha-reingreso": "02/04/22",
-      "fecha-creacion-documento": "01/04/22",
-      "titulo": "50 SOMBRAS DE GREY",
-      "fecha-actualizacion": "01/04/22",
-      "path-texto-enriquecido": "./texto-enriquecido",
-      "path-texto-original": "./texto-enriquecido"
-    }
   ]
 }
