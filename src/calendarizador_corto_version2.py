@@ -23,7 +23,7 @@ semaforoCola = Semaphore()
 expresion = ''
 palabrasClave = ['covid', 'pandemia', 'coronavirus']
 COOLDOWN = 0.15
-LIMIT = 2
+LIMIT = 20
 '''
 Funcion que crea la cola inicial con mis link semilla, ademas genera una expresion con las semillas para
 posteriormente serutilizada en el filtrado del contenido de las paginas
@@ -35,7 +35,7 @@ def crearColaSemillas(urls , spacing):
         time.sleep(spacing)
         cola.put((url, 0))
 
-    return "DONE FEEDING"
+    return "Termino cargar los URLS"
 
 '''
 Funcion que transforma un pdf en texto para validar si contiene alguna palabra clave en sus primeras 5 paginas
@@ -118,16 +118,15 @@ def procesador(url):
     #Se extraen los hipervinculos que sean relacionados a las semillas
     exp = url[0]+'|^/'
     for link in soup.find_all(attrs={'href': re.compile(exp)}):
-        semaforoCola.acquire()
         urls.put(link.get('href'))
-        semaforoCola.release()
+
+    urlComprobar = ""
 
     #with ThreadPoolExecutor(max_workers=10) as exec:
     while not urls.empty():
         semaforoCola.acquire()  
         urlComprobar = urls.get()
         semaforoCola.release()
-        #exec.submit(comprobarUrl, urlComprobar, url)   
         comprobarUrl(urlComprobar, url)
     return urlComprobar
 
@@ -138,7 +137,7 @@ def calendarizador_corto(root, rv, nvi):
     #los que se revisitan van directo a la lista de procesados
     procesados = rv
     
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=25) as executor:
         #SEMILLAS
         future_to_url = {
             executor.submit(crearColaSemillas, root, COOLDOWN): 'FEEDER DONE'}
@@ -149,8 +148,31 @@ def calendarizador_corto(root, rv, nvi):
                 return_when=concurrent.futures.ALL_COMPLETED)
             
             while not cola.empty():
-                semaforoCola.acquire()               
+                semaforoCola.acquire()
                 url = cola.get()
+                print("------------ LINK", url)
                 semaforoCola.release()
                 future_to_url[executor.submit(procesador, url)] = url
-        
+
+            for future in done:
+                url = future_to_url[future]
+                try:
+                    data = future.result()
+                except Exception as exc:
+                    print('%r generated an exception: %s' % (url, exc))
+                else:
+                    if url == 'FEEDER DONE':
+                        print(data)
+
+                # eliminar el futuro ahora completado
+                del future_to_url[future]
+
+semillas = [
+    "https://www.ict.go.cr/en/documents/material-de-apoyo-coronavirus/protocolos-ict-sector-privado.html",
+    "https://repositorio.conare.ac.cr/bitstream/handle/20.500.12337/8009/Leon_G_Efectos_pandemia_COVID_19_Mipymes_Costa%20Rica_2020.pdf?sequence=1&isAllowed=y",
+    "https://www.ministeriodesalud.go.cr/index.php/biblioteca-de-archivos-left/documentos-ministerio-de-salud/vigilancia-de-la-salud/normas-protocolos-guias-y-lineamientos/situacion-nacional-covid-19/estrategias-guias-y-recomendaciones-covid-19"
+]
+revisados = []
+noVisitar = []
+
+calendarizador_corto(semillas, revisados, noVisitar)

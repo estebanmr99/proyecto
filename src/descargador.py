@@ -20,24 +20,12 @@ PATH = '../documentos/docsOriginales/'
 LINKS = []
 COOLDOWN = 0.15
 
-# lista de URLS a descargar
-URLS = [
-        'https://www.clickdimensions.com/links/TestPDFfile.pdf',
-        'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
-        'https://repositorio.conare.ac.cr/bitstream/handle/20.500.12337/8286/Gomez_S_Personas_afectadas_pandemia_demanda_bono_Proteger_IEN_2022.pdf?sequence=1&isAllowed=y',
-        'https://www.ict.go.cr/en/documents/material-de-apoyo-coronavirus/pruebas-covid-para-usa/1886-faq-requirements-for-travel-to-eeuu/file.html',
-        'https://www.ministeriodesalud.go.cr/index.php/biblioteca-de-archivos-left/documentos-ministerio-de-salud/vigilancia-de-la-salud/normas-protocolos-guias-y-lineamientos/situacion-nacional-covid-19/lineamientos-especificos-covid-19/lineamientos-de-servicios-de-salud/5038-version-3-08-de-abril-2020-lineamientos-generales-para-farmacias-de-comunidad-privadas-frente-a-la-pandemia-por-covid-19/file',
-        'https://www.ministeriodesalud.go.cr/index.php/biblioteca/material-educativo/material-de-comunicacion/salud-mental/4103-consejos-para-disminuir-el-estres-de-ninos-y-ninas-durante-la-pandemia/file',
-        'https://www.ministeriodesalud.go.cr/index.php/biblioteca-de-archivos-left/documentos-ministerio-de-salud/vigilancia-de-la-salud/normas-protocolos-guias-y-lineamientos/situacion-nacional-covid-19/lineamientos-especificos-covid-19/protocolos-1/3655-version-3-19-de-abril-2021-protocolos-para-la-operacion-paulatina-del-aeropuerto-internacional-daniel-oduber-quiros-durante-la-pandemia-por-covid-19-posterior-a-la-apertura-de-fronteras-costa-rica/file',
-        'https://www.ministeriodesalud.go.cr/index.php/biblioteca-de-archivos-left/documentos-ministerio-de-salud/vigilancia-de-la-salud/normas-protocolos-guias-y-lineamientos/situacion-nacional-covid-19/lineamientos-especificos-covid-19/protocolos-1/2756-version-1-05-de-octubre-2020-protocolo-general-para-el-manejo-del-paro-cardiorespitatorio-pcr-en-el-entorno-extrahospitalario-y-en-el-marco-de-la-pandemia-por-covid-19/file',
-        'https://docs.python.org/3/library/concurrency.html']
-
 # agrega una lista de URLS a una cola de prioridad para ejecutar los hilos
 def addURLsToThreadQueue(urls , spacing):
     for url in urls:
         time.sleep(spacing)
         q.put(url)
-    return "DONE FEEDING"
+    return "Termino cargar los URLS"
 
 # descarga un URL y devuelve los datos sin procesar, o None en caso de error
 def download_url(url):
